@@ -1,5 +1,5 @@
 {
-  "name": "webpack-loader-typescript-template",
+  "name": "@atypon/nxt-webpack-dynamic-widget",
   "version": "1.0.0",
   "description": "Template for creating webpack loaders that uses typescript",
   "main": "dist/src/index.js",
