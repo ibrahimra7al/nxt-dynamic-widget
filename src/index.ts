@@ -2,34 +2,47 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 const resolveWidgetTemplateFile = function (widgetDirectory: string): string {
-    return '';
+    return path.join(widgetDirectory, 'default');
 }
 
 const generateDynamicWidgetContent = function(context: string): string {
-    let rootDirectory = path.resolve(context, '/widgets');
+    let rootDirectory = path.resolve(context, './src/widgets');
     let dynamicWidgetComponent = `
-    import Loadable from 'react-loadable';
+    // @ts-nocheck
+
+    import loadable from '@react-loadable/revised';
     const Widgets = {};
     `
-    dynamicWidgetComponent += fs.readdirSync(rootDirectory).filter(p => fs.lstatSync(p).isDirectory()).map(d => {
-        const templatePath = resolveWidgetTemplateFile(path.join(rootDirectory, d));
-        return {
-            path: templatePath,
-            name: d
-        };
+    dynamicWidgetComponent += fs.readdirSync(rootDirectory).map(p => ({
+        path: path.join(rootDirectory, p),
+        name: p
+    })).filter(p => fs.lstatSync(p.path).isDirectory()).map(d => {
+        d.path = resolveWidgetTemplateFile(d.path);
+        return d;
     }).map(({path, name}) => `
         Widgets['${name}'] = Loadable({
-            loader: () => import(/* webpackChunkName: '${path}' */ '${path}'),
+            loader: () => import(/* webpackChunkName: '${name}' */ '${path}'),
             loading: () => <div>Loading...</div>
         });
     `).join('');
-    dynamicWidgetComponent += `const WebpackNXTDynamicWidget = ({name}) => <Widgets[name] />;`
+    dynamicWidgetComponent += `const WebpackNXTDynamicWidget = ({name}) => { const Widget = Widgets[name]; return <Widget />; };`
     dynamicWidgetComponent += 'export default WebpackNXTDynamicWidget';
     return dynamicWidgetComponent;
 }
 
 const loader = function (content:string) :string {
-    if(content.includes("WebpackNXTDynamicWidget")) return generateDynamicWidgetContent(this.context);
+    const {
+        rootDirectory
+    } = this.getOptions({
+        "type": "object",
+        "properties": {
+          "rootDirectory": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      });
+    if(content.includes("WebpackNXTDynamicWidget")) return generateDynamicWidgetContent(rootDirectory);
     return content;
 }
 

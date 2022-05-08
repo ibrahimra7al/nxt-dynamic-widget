@@ -1,6 +1,6 @@
 {
-  "name": "@atypon/nxt-webpack-dynamic-widget",
-  "version": "1.0.0",
+  "name": "@atypon/nxt-dynamic-widgets-loader",
+  "version": "1.0.12",
   "description": "Template for creating webpack loaders that uses typescript",
   "main": "dist/src/index.js",
   "scripts": {
@@ -8,20 +8,12 @@
     "build": "tsc",
     "lint": "eslint ./src --ext .ts"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Ibrahimrahhal/webpack-loader-typescript-template.git"
-  },
   "keywords": [
     "webpack",
     "webpack-loader"
   ],
   "author": "Ibrahim Rahhal <ibrahim.rahhal3636@gmail.com>",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Ibrahimrahhal/webpack-loader-typescript-template/issues"
-  },
-  "homepage": "https://github.com/Ibrahimrahhal/webpack-loader-typescript-template#readme",
   "peerDependencies": {
     "webpack": "^5.0.0"
   },
