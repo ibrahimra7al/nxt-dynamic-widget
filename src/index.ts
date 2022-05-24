@@ -1,11 +1,24 @@
 import * as path from 'path';
 import * as fs from 'fs';
 
-const resolveWidgetTemplateFile = function (widgetDirectory: string): string {
-    return path.join(widgetDirectory, 'default');
+const resolveSubdirectories = function (context: string): string[] {
+    return fs
+        .readdirSync(context)
+        .map(p => path.join(context, p))
+        .filter(p => fs.existsSync(p) && fs.lstatSync(p).isDirectory())
 }
 
-const generateDynamicWidgetContent = function(context: string): string {
+const resolveWidgetTemplateFile = function (widgetDirectory: string): string[] {
+    let paths = [];
+    resolveSubdirectories(widgetDirectory).forEach(p => {
+        resolveSubdirectories(p).forEach(sub => {
+            paths.push(sub);
+        });
+    });
+    return paths;
+}
+
+const generateDynamicWidgetContent = function (context: string): string {
     let rootDirectory = path.resolve(context, './src/widgets');
     let dynamicWidgetComponent = `
     // @ts-nocheck
@@ -16,33 +29,40 @@ const generateDynamicWidgetContent = function(context: string): string {
     dynamicWidgetComponent += fs.readdirSync(rootDirectory).map(p => ({
         path: path.join(rootDirectory, p),
         name: p
-    })).filter(p => fs.lstatSync(p.path).isDirectory()).map(d => {
-        d.path = resolveWidgetTemplateFile(d.path);
-        return d;
-    }).map(({path, name}) => `
-        Widgets['${name}'] = Loadable({
-            loader: () => import(/* webpackChunkName: '${name}' */ '${path}'),
+    })).filter(p => fs.lstatSync(p.path).isDirectory())
+        .map(({ name, path }) => {
+            return {
+                paths: resolveWidgetTemplateFile(path),
+                name
+            };
+        }).map(({ paths, name }) => paths.map(p => {
+            const splitted = p.split('/');
+            const falvor = splitted.pop();
+            const variant = splitted.pop();
+            return `
+        Widgets['${name}']['${variant}']['${falvor}'] = Loadable({
+            loader: () => import(/* webpackChunkName: '${name}--${variant}--${falvor}' */ '${p}'),
             loading: () => <div>Loading...</div>
         });
-    `).join('');
-    dynamicWidgetComponent += `const WebpackNXTDynamicWidget = ({name}) => { const Widget = Widgets[name]; return <Widget />; };`
-    dynamicWidgetComponent += 'export default WebpackNXTDynamicWidget';
+    `}).join('')).join('');
+    dynamicWidgetComponent += `const NXTDynamicWidget = ({name:string, variant:string, flavor:string}) => { const Widget = Widgets[name][variant][flavor]; return <Widget />; };`
+    dynamicWidgetComponent += 'export default NXTDynamicWidget';
     return dynamicWidgetComponent;
 }
 
-const loader = function (content:string) :string {
+const loader = function (content: string): string {
     const {
         rootDirectory
     } = this.getOptions({
         "type": "object",
         "properties": {
-          "rootDirectory": {
-            "type": "string"
-          }
+            "rootDirectory": {
+                "type": "string"
+            }
         },
         "additionalProperties": false
-      });
-    if(content.includes("WebpackNXTDynamicWidget")) return generateDynamicWidgetContent(rootDirectory);
+    });
+    if (content.includes("NXTDynamicWidget")) return generateDynamicWidgetContent(rootDirectory);
     return content;
 }
 
