@@ -9,7 +9,7 @@ const resolveSubdirectories = function (context: string): string[] {
 }
 
 const resolveWidgetTemplateFile = function (widgetDirectory: string): string[] {
-    let paths = [];
+    const paths = [];
     resolveSubdirectories(widgetDirectory).forEach(p => {
         resolveSubdirectories(p).forEach(sub => {
             paths.push(sub);
@@ -19,7 +19,7 @@ const resolveWidgetTemplateFile = function (widgetDirectory: string): string[] {
 }
 
 const generateDynamicWidgetContent = function (context: string): string {
-    let rootDirectory = path.resolve(context, './src/widgets');
+    const rootDirectory = path.resolve(context, './src/widgets');
     let dynamicWidgetComponent = `
     // @ts-nocheck
 
