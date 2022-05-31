@@ -23,7 +23,8 @@ const generateDynamicWidgetContent = function (context: string): string {
     let dynamicWidgetComponent = `
     // @ts-nocheck
 
-    import loadable from '@react-loadable/revised';
+    const loadable = require('@react-loadable/revised');
+    const React = require('react');
     const Widgets = {};
     `
     dynamicWidgetComponent += fs.readdirSync(rootDirectory).map(p => ({
@@ -40,12 +41,18 @@ const generateDynamicWidgetContent = function (context: string): string {
             const falvor = splitted.pop();
             const variant = splitted.pop();
             return `
-        Widgets['${name}']['${variant}']['${falvor}'] = Loadable({
-            loader: () => import(/* webpackChunkName: '${name}--${variant}--${falvor}' */ '${p}'),
-            loading: () => <div>Loading...</div>
-        });
+            if (!Widgets['${name}']) {
+                Widgets['${name}'] = {};
+            }
+            if (!Widgets['${name}']['${variant}']) {
+                Widgets['${name}']['${variant}'] = {};
+            }
+            Widgets['${name}']['${variant}']['${falvor}'] = loadable.default({
+                loader: () => import(/* webpackChunkName: "${name}--${variant}--${falvor}" */ '${p}'),
+                loading: () => <div>Loading...</div>
+            });
     `}).join('')).join('');
-    dynamicWidgetComponent += `const NXTDynamicWidget = ({name:string, variant:string, flavor:string}) => { const Widget = Widgets[name][variant][flavor]; return <Widget />; };`
+    dynamicWidgetComponent += `const NXTDynamicWidget = ({name, variant, flavor}) => { const Widget = Widgets[name][variant][flavor]; return <Widget />; };`
     dynamicWidgetComponent += 'export default NXTDynamicWidget';
     return dynamicWidgetComponent;
 }
@@ -67,4 +74,3 @@ const loader = function (content: string): string {
 }
 
 export default loader;
-module.exports = loader;
