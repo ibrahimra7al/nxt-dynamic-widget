@@ -26,6 +26,21 @@ const generateDynamicWidgetContent = function (context: string): string {
     const loadable = require('@react-loadable/revised');
     const React = require('react');
     const Widgets = {};
+    const Loading = (props)=> { 
+        if (props.isLoading) {
+            if (props.timedOut) {
+                return <div>Loader timed out!</div>
+            } else if (props.pastDelay) {
+                return <div>Loading...</div>
+            } else {
+                return null
+            }
+        } else if (props.error) {
+            return <div>Error! Component failed to load</div>
+        } else {
+            return null
+        }
+    }
     `
     dynamicWidgetComponent += fs.readdirSync(rootDirectory).map(p => ({
         path: path.join(rootDirectory, p),
@@ -48,11 +63,17 @@ const generateDynamicWidgetContent = function (context: string): string {
                 Widgets['${name}']['${variant}'] = {};
             }
             Widgets['${name}']['${variant}']['${falvor}'] = loadable.default({
-                loader: () => import(/* webpackChunkName: "${name}--${variant}--${falvor}" */ '${p}'),
-                loading: () => <div>Loading...</div>
+                loader: () => import(/* webpackChunkName: "${name}--${variant}--${falvor}"*/ '${p}'),
+                loading: Loading
             });
     `}).join('')).join('');
-    dynamicWidgetComponent += `const NXTDynamicWidget = ({name, variant, flavor}) => { const Widget = Widgets[name][variant][flavor]; return <Widget />; };`
+    dynamicWidgetComponent += `const NXTDynamicWidget = ({name, variant, flavor}) => { 
+        if (Widgets[name] && Widgets[name][variant] && Widgets[name][variant][flavor]) {
+            const Widget = Widgets[name][variant][flavor];
+            return <Widget />;
+        }
+        return <h1>Widget not found</h1>;
+     };`
     dynamicWidgetComponent += 'export default NXTDynamicWidget';
     return dynamicWidgetComponent;
 }
