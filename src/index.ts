@@ -65,7 +65,8 @@ const generateDynamicWidgetContent = function (context: string): string {
             Widgets['${name}']['${variant}']['${falvor}'] = loadable.default({
                 loader: () => import(/* webpackChunkName: "${name}--${variant}--${falvor}" */ '${p}'),
                 loading: Loading,
-                modules: ['${p}']
+                modules: ['${p}'],
+                webpack: () => Object.keys(__webpack_modules__)
             });
     `}).join('')).join('');
     dynamicWidgetComponent += `const NXTDynamicWidget = ({name, variant, flavor}) => { 
@@ -91,7 +92,8 @@ const loader = function (content: string): string {
         },
         "additionalProperties": false
     });
-    if (content.includes("NXTDynamicWidget")) return generateDynamicWidgetContent(rootDirectory);
+    const xx = generateDynamicWidgetContent(rootDirectory);
+    if (content.includes("NXTDynamicWidget")) return xx;
     return content;
 }
 
