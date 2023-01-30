@@ -69,10 +69,10 @@ const generateDynamicWidgetContent = function (context: string): string {
                 webpack: () => Object.keys(__webpack_modules__)
             });
     `}).join('')).join('');
-    dynamicWidgetComponent += `const NXTDynamicWidget = ({name, variant, flavor}) => { 
+    dynamicWidgetComponent += `const NXTDynamicWidget = ({name, variant, flavor, dropzoneName, dropzoneOrder}) => { 
         if (Widgets[name] && Widgets[name][variant] && Widgets[name][variant][flavor]) {
             const Widget = Widgets[name][variant][flavor];
-            return <Widget />;
+            return <Widget dropzone={dropzoneName} order={dropzoneOrder} />;
         }
         return <h1>Widget not found</h1>;
      };`
